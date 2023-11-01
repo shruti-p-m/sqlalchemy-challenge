@@ -120,7 +120,8 @@ def tobs():
         tobs_dict["date"] = date
         tobs_dict["prcp"] = [prcp]
         tobs_data.append(tobs_dict)
-    #return the list of stations in json format
+
+    #return the list of temperature observations in JSON format
     return jsonify(tobs_data)
 
 @app.route("/api/v1.0/<start>") # giving null output
@@ -132,10 +133,10 @@ def start_date(start):
     #https://www.programiz.com/python-programming/datetime
     start_date= dt.datetime.strptime(start, '%Y-%m-%d')
 
-    #setting selection to get the min, max and avg
+    #setting selection to get the min, avg, and max
     sel = [func.min(measurement.tobs),
-       func.max(measurement.tobs),
-       func.avg(measurement.tobs)]
+       func.avg(measurement.tobs),
+       func.max(measurement.tobs)]
 
     #querying the temperature min, max, and filtering for dates after the start date
     data_from_start = session.query(*sel).\
@@ -147,7 +148,7 @@ def start_date(start):
     # Convert list of tuples into normal list
     from_start = list(np.ravel(data_from_start))
 
-    #return the min, max, and average in json format
+    #return the min, average, and max in json format
     return jsonify(from_start)
 
 @app.route("/api/v1.0/<start>/<end>")
@@ -155,14 +156,15 @@ def start_end_date(start, end):
     # Create our session (link) from Python to the DB
     session = Session(bind=engine)
 
-    #converting input for start and ebd date into date object
+    #converting input for start and end date into date object
     start_date= dt.datetime.strptime(start, '%Y-%m-%d')
     end_date= dt.datetime.strptime(end,'%Y-%m-%d')
 
-    #setting selection to get the min, max and avg 
+    #setting selection to get the min, avg  and max
     sel = [func.min(measurement.tobs),
-       func.max(measurement.tobs),
-       func.avg(measurement.tobs)]
+       func.avg(measurement.tobs),
+       func.max(measurement.tobs)]
+    
     #querying the temperature min, max, and filtering for dates after the start date and before the end date to get the range
     data_from_start_end = session.query(*sel).\
         filter(measurement.date >= start_date).filter(measurement.date <= end_date).all()
@@ -173,7 +175,7 @@ def start_end_date(start, end):
     # Convert list of tuples into normal list
     from_start_end = list(np.ravel(data_from_start_end))
 
-    #return the min, max, and average in json format
+    #return the min, average, max in json format
     return jsonify(from_start_end)
 #################################################
 # Flask Routes
