@@ -41,8 +41,9 @@ def one_year_back():
 #################################################
 # Flask Setup
 #################################################
+#setting home route
 @app.route("/")
-def home(): # need to figure out the proper text and cite it
+def home():
     return """The routes that are available:
     <ul>
      <li>/api/v1.0/precipitation for Precipitation infomation in JSON format</li>
@@ -54,6 +55,7 @@ def home(): # need to figure out the proper text and cite it
      <li>/api/v1.0/start/end for getting the minimum, average,and maximum temperature for a specified start-end date range,
      where start and end in the link is replaced with YYYY-MM-DD </li>"""
 
+#setting route for precipitation information
 @app.route("/api/v1.0/precipitation")
 def precipitaion():
     # Create our session (link) from Python to the DB
@@ -77,11 +79,13 @@ def precipitaion():
     # return the dictionary in json format
     return jsonify(prcp_data)
 
+#setting up route for stations
 @app.route("/api/v1.0/stations")
 def stations():
     # Create our session (link) from Python to the DB
     session = Session(bind=engine)
 
+    #quering station information from station class
     stations = session.query(station.station).all()
     
     #close session
@@ -93,14 +97,16 @@ def stations():
     #return the list of stations in json format
     return jsonify(all_stations)
 
+#setting up route for tobs (temperature observation)
 @app.route("/api/v1.0/tobs")
 def tobs():
     # Create our session (link) from Python to the DB
     session = Session(bind=engine)
 
-    #query the selection, filtering by dates from a year from the lastest date where the station has the id of the most active station
+    #chosing selection to get the measurement date and the temperature observed
     sel = [measurement.date, measurement.tobs]
     
+    #query the selection, filtering by dates from a year from the lastest date where the station has the id of the most active station
     station_temp = session.query(*sel).\
     filter(measurement.date >= one_year_back(), measurement.station == 'USC00519281').all()
     
@@ -122,19 +128,23 @@ def start_date(start):
     # Create our session (link) from Python to the DB
     session = Session(bind=engine)
 
+    #converting input into date object
     #https://www.programiz.com/python-programming/datetime
     start_date= dt.datetime.strptime(start, '%Y-%m-%d')
 
+    #setting selection to get the min, max and avg
     sel = [func.min(measurement.tobs),
        func.max(measurement.tobs),
        func.avg(measurement.tobs)]
 
+    #querying the temperature min, max, and filtering for dates after the start date
     data_from_start = session.query(*sel).\
         filter(measurement.date >= start_date).all()
     
     #close session
     session.close()
-
+    
+    # Convert list of tuples into normal list
     from_start = list(np.ravel(data_from_start))
 
     #return the min, max, and average in json format
@@ -145,19 +155,22 @@ def start_end_date(start, end):
     # Create our session (link) from Python to the DB
     session = Session(bind=engine)
 
+    #converting input for start and ebd date into date object
     start_date= dt.datetime.strptime(start, '%Y-%m-%d')
     end_date= dt.datetime.strptime(end,'%Y-%m-%d')
 
+    #setting selection to get the min, max and avg 
     sel = [func.min(measurement.tobs),
        func.max(measurement.tobs),
        func.avg(measurement.tobs)]
-
+    #querying the temperature min, max, and filtering for dates after the start date and before the end date to get the range
     data_from_start_end = session.query(*sel).\
         filter(measurement.date >= start_date).filter(measurement.date <= end_date).all()
     
     #close session
     session.close()
     
+    # Convert list of tuples into normal list
     from_start_end = list(np.ravel(data_from_start_end))
 
     #return the min, max, and average in json format
